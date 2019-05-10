@@ -12,6 +12,8 @@ extern "C" {
 
 #include <stddef.h>
 
+#include "./compiletime.h"
+
 /// \brief count the arguments by string
 /// \param args arguments string
 /// \return count of arguments

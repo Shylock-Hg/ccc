@@ -4,12 +4,6 @@
 
 #include <ccc/utils/argc.h>
 
-/*! \brief check the validation of variadic parameters
- *  \param dummy required before variadic parameters
- *  \param ... the variadic parameters
- * */
-int check(int dummy, ...) { return dummy; }
-
 /// \brief count the arguments by string
 /// \param args arguments string
 /// \return count of arguments
