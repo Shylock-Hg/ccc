@@ -28,15 +28,13 @@ extern "C" {
 /// \brief print the message of panic
 /// \param msg Is there massage in fact
 /// \param the empty or (fmt, ...)
-static inline void _print_panic(const bool msg, ...) {
-    if (msg) {
+static inline void _print_panic(const int dummy , ...) {
         va_list ap;
-        va_start(ap, msg);
+        va_start(ap, dummy);
         // Unsafe if not a format string here!!
         const char* fmt = va_arg(ap, char*);
         vfprintf(stderr, fmt, ap);
         va_end(ap);
-    }
 }
 
 /// \brief panic
@@ -45,7 +43,7 @@ static inline void _print_panic(const bool msg, ...) {
     do {                                       \
         _print_panic_loc();                    \
         if (0 < strlen(#__VA_ARGS__)) {        \
-            _print_panic(true, ##__VA_ARGS__); \
+            _print_panic(0, ##__VA_ARGS__); \
         }                                      \
         fflush(stderr);                        \
         abort();                               \
