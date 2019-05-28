@@ -22,9 +22,10 @@
 /// \brief modify the bits
 /// \param clear clear mask to clear bits which setted in mask
 /// \param set set mask to set bits which setted in mask
-#define BITS_MODIFY(word, clear, set) do {\
-    word = ((word & (~clear)) | set);\
-} while(0);
+#define BITS_MODIFY(word, clear, set)     \
+    do {                                  \
+        word = ((word & (~clear)) | set); \
+    } while (0);
 
 /// \brief evaluate the value of substitute word
 /// \param word the bits

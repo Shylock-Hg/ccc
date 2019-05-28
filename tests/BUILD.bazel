@@ -39,3 +39,10 @@ cc_test(
     includes = ["include"],
     deps = ["//:ccc"]
 )
+
+cc_test(
+    name = "sdb_test",
+    srcs = ["container/sdb_test.c"],
+    includes = ["include"],
+    deps = ["//:ccc"],
+)

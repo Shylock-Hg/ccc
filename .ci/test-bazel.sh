@@ -4,6 +4,7 @@
 readonly tests=(
     "tests:argc_test"
     "tests:clog_test"
+    "tests:sdb_test"
     "tests:bits_test"
 )
 
