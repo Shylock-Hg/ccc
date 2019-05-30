@@ -1,3 +1,3 @@
 
 COPTS_TEST = ["-coverage", "-g"]
-LOPTS_TEST = ["-lgcov"]
+LOPTS_TEST = ["-coverage"]
