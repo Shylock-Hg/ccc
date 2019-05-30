@@ -1,48 +1,67 @@
+load("//:opts.bzl",
+    "COPTS_TEST",
+    "LOPTS_TEST",
+)
+
 cc_test(
     name = "argc_test",
     srcs = ["utils/argc_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"],
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
 
 cc_test(
     name = "clog_test",
     srcs = ["utils/clog_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"],
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
 
 cc_test(
     name = "panic_test",
     srcs = ["utils/panic_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"],
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
 
 cc_test(
     name = "panicf0_test",
     srcs = ["utils/panicf0_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"]
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
 
 cc_test(
     name = "panicf_test",
     srcs = ["utils/panicf_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"],
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
 
 cc_test(
     name = "bits_test",
     srcs = ["utils/bits_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"]
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
 
 cc_test(
     name = "sdb_test",
     srcs = ["container/sdb_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"],
+    deps = ["//:cccd"],
+    copts = COPTS_TEST,
+    linkopts = LOPTS_TEST,
 )
