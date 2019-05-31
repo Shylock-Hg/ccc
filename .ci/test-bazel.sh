@@ -8,4 +8,4 @@ readonly tests=(
     "tests:bits_test"
 )
 
-bazel test "${tests[@]}"
+bazel coverage "${tests[@]}"
