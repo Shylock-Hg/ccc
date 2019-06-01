@@ -6,10 +6,7 @@
 
 #include <limits.h>
 
-#include <sys/types.h>
-
 #include <ccc/container/sdb.h>
-#include <ccc/utils/compiletime.h>
 #include <ccc/utils/panic.h>
 
 #define SDB_TYPE_5 0U

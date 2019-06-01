@@ -12,8 +12,6 @@ extern "C" {
 
 #include <stddef.h>
 
-#include <sys/cdefs.h>
-
 /*! \brief check the validation of variadic parameters
  *  \param dummy required before variadic parameters
  *  \param ... the variadic parameters
