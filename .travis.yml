@@ -159,7 +159,7 @@ before_install:
     - ./.ci/install-$(uname).sh
 
 script :
-    - bazel build --jobs=$(nproc) ccc
+    - bazel build --jobs=$(nproc) ccc //tests/...
     - ./.ci/test-bazel.sh
 
 after_success:
