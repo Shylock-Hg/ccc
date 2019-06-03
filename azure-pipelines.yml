@@ -26,11 +26,11 @@ jobs:
     displayName: 'Setup on Windows!'
     condition: eq(variables['Agent.OS'], 'Windows_NT')
 
-  - script: bazel build ccc
+  - script: bazel build ccc //tests/...
     displayName: 'Build library on Unix!'
     condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
-  - powershell: ~\scoop\apps\bazel\current\bazel build ccc
+  - powershell: ~\scoop\apps\bazel\current\bazel build ccc //tests/...
     displayName: 'Build library on Windows!'
     condition: eq(variables['Agent.OS'], 'Windows_NT')
 
