@@ -156,7 +156,7 @@ matrix:
 
 before_install:
     - eval "${MATRIX_EVAL}"
-    - ./.ci/install-$(uname).sh
+    - ./.ci/install-Unix.sh
 
 script :
     - bazel build --jobs=$(nproc) ccc //tests/...

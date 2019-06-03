@@ -12,6 +12,25 @@ extern "C" {
 
 #include <stddef.h>
 
+#if defined(unix) && unix
+#include <sys/cdefs.h>
+#endif
+
+#ifndef __cplusplus
+#if defined(unix) && unix
+#define static_assert(expr, desc) _Static_assert(expr, desc)
+#else
+#define static_assert(expr, desc)
+#endif
+#endif
+
+/// \brief the memory aligned size
+#if defined(__GNUC__) || defined(__clang__)
+#define PACKED __attribute__((__packed__))
+#else
+#define PACKED
+#endif
+
 /*! \brief check the validation of variadic parameters
  *  \param dummy required before variadic parameters
  *  \param ... the variadic parameters

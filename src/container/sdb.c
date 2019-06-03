@@ -7,6 +7,7 @@
 #include <limits.h>
 
 #include <ccc/container/sdb.h>
+#include <ccc/utils/compiletime.h>
 #include <ccc/utils/panic.h>
 
 #define SDB_TYPE_5 0U
@@ -40,7 +41,7 @@
 //    uint8_t len : 5;   /// Length without NULL ending and same as capcity
 //} sdb_flags_t;
 
-//_Static_assert(1 == sizeof(sdb_flags_t), "Unexpected sizeof(sdb_flags_t)");
+// static_assert(1 == sizeof(sdb_flags_t), "Unexpected sizeof(sdb_flags_t)");
 
 /// \note The sdb is capcitable to c string, but consider it as sdb first
 
@@ -54,7 +55,7 @@ typedef struct sdb5 {
     uint8_t buf[];     /// pointer to data memory
 } sdb5_t;
 
-_Static_assert(1 == sizeof(sdb5_t), "Unexpected sizeof(sdb5_t)");
+static_assert(1 == sizeof(sdb5_t), "Unexpected sizeof(sdb5_t)");
 
 /// The sdbX_t definition
 /// \field len the length without NULL ending
@@ -63,24 +64,30 @@ _Static_assert(1 == sizeof(sdb5_t), "Unexpected sizeof(sdb5_t)");
 /// \field unused
 /// \field buf the pointer to data memory
 /// \note cap = len + 1 + free
-#define sdbX(n)                                         \
-    typedef struct __attribute__((__packed__)) sdb##n { \
-        uint##n##_t len;                                \
-        uint##n##_t cap;                                \
-        uint8_t type : 3;                               \
-        uint8_t unused : 5;                             \
-        uint8_t buf[];                                  \
+#define sdbX(n)                    \
+    typedef struct PACKED sdb##n { \
+        uint##n##_t len;           \
+        uint##n##_t cap;           \
+        uint8_t type : 3;          \
+        uint8_t unused : 5;        \
+        uint8_t buf[];             \
     } sdb##n##_t;
 
+#ifdef _MSC_VER
+#pragma pack(1)
+#endif  // _MSC_VER
 sdbX(8);
 sdbX(16);
 sdbX(32);
 sdbX(64);
+#ifdef _MSC_VER
+#pragma pack()
+#endif  // _MSC_VER
 
-_Static_assert(2 * 1 + 1 == sizeof(sdb8_t), "Unexpected sizeof(sdb8_t)");
-_Static_assert(2 * 2 + 1 == sizeof(sdb16_t), "Unexpected sizeof(sdb16_t)");
-_Static_assert(2 * 4 + 1 == sizeof(sdb32_t), "Unexpected sizeof(sdb32_t)");
-_Static_assert(2 * 8 + 1 == sizeof(sdb64_t), "Unexpected sizeof(sdb64_t)");
+static_assert(2 * 1 + 1 == sizeof(sdb8_t), "Unexpected sizeof(sdb8_t)");
+static_assert(2 * 2 + 1 == sizeof(sdb16_t), "Unexpected sizeof(sdb16_t)");
+static_assert(2 * 4 + 1 == sizeof(sdb32_t), "Unexpected sizeof(sdb32_t)");
+static_assert(2 * 8 + 1 == sizeof(sdb64_t), "Unexpected sizeof(sdb64_t)");
 
 /// \brief get the pointer to sdb header
 /// \param sdb the sdb pointer
