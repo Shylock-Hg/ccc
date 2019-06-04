@@ -1,6 +1,7 @@
 load("//:opts.bzl",
     "COPTS_TEST",
     "LOPTS_TEST",
+    "COPTS",
 )
 
 cc_test(
@@ -8,7 +9,7 @@ cc_test(
     srcs = ["utils/argc_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )
 
@@ -17,7 +18,7 @@ cc_test(
     srcs = ["utils/clog_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )
 
@@ -26,7 +27,7 @@ cc_test(
     srcs = ["utils/panic_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )
 
@@ -35,7 +36,7 @@ cc_test(
     srcs = ["utils/panicf0_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )
 
@@ -44,7 +45,7 @@ cc_test(
     srcs = ["utils/panicf_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )
 
@@ -53,7 +54,7 @@ cc_test(
     srcs = ["utils/bits_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )
 
@@ -62,6 +63,6 @@ cc_test(
     srcs = ["container/sdb_test.c"],
     includes = ["include"],
     deps = ["//:cccd"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )

@@ -7,6 +7,7 @@ licenses(["notice"])
 load("//:opts.bzl",
     "COPTS_TEST",
     "LOPTS_TEST",
+    "COPTS",
 )
 
 # https://docs.bazel.build/versions/master/be/c-cpp.html#cc_library
@@ -15,6 +16,7 @@ cc_library(
     srcs = glob(["src/utils/*.c", "src/container/*.c"]),
     hdrs = glob(["include/ccc/utils/*.h", "include/ccc/container/*.h"]) ,
     includes = ["include"],
+    copts = COPTS,
 )
 
 cc_library(
@@ -22,6 +24,6 @@ cc_library(
     srcs = glob(["src/utils/*.c", "src/container/*.c"]),
     hdrs = glob(["include/ccc/utils/*.h", "include/ccc/container/*.h"]) ,
     includes = ["include"],
-    copts = COPTS_TEST,
+    copts = COPTS_TEST + COPTS,
     linkopts = LOPTS_TEST,
 )

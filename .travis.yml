@@ -160,6 +160,7 @@ before_install:
 
 script :
     - bazel build --jobs=$(nproc) ccc
+    - bazel build --jobs=$(nproc) --collect_code_coverage //tests/...
     - ./.ci/test-bazel.sh
 
 after_success:

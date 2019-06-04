@@ -7,6 +7,6 @@
 #include <ccc/utils/panic.h>
 
 int main(int argc, char* argv[]) {
-    panic();
+//    panic();
     return 0;
 }
