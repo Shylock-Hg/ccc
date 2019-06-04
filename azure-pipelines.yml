@@ -1,0 +1,43 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+jobs:
+- job: test
+  displayName: 'Building and Testing'
+  strategy:
+    matrix:
+      Linux:
+        vmImage: ubuntu-16.04
+      MacOS:
+        vmImage: macOS-10.13
+      Windows:
+        vmImage: vs2017-win2016
+  pool:
+    vmImage: $(vmImage)
+
+  steps:
+  - script: ./.ci/install-Unix.sh
+    displayName: 'Setup on Unix!'
+    condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+  - powershell: .\.ci\install-Windows.ps1
+    displayName: 'Setup on Windows!'
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+  - script: bazel build ccc //tests/...
+    displayName: 'Build library on Unix!'
+    condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+  - powershell: ~\scoop\apps\bazel\current\bazel build ccc //tests/...
+    displayName: 'Build library on Windows!'
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+  - script: ./.ci/test-bazel.sh
+    displayName: 'Testing on Unix!'
+    condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+  - powershell: .\.ci\test-bazel.ps1
+    displayName: 'Testing on Windows!'
+    condition: eq(variables['Agent.OS'], 'Windows_NT')

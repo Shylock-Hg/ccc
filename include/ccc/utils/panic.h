@@ -12,12 +12,9 @@ extern "C" {
 
 #include <assert.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <sys/cdefs.h>
 
 /// \brief print the location of panic
 #define _print_panic_loc()                                      \
