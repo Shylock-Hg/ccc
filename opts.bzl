@@ -1,0 +1,1 @@
+COPTS = ["-Wall", "-std=c99", "-Werror"]

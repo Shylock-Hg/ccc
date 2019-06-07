@@ -1,8 +1,14 @@
+load(
+    "//:opts.bzl",
+    "COPTS",
+)
+
 cc_test(
     name = "argc_test",
     srcs = ["utils/argc_test.c"],
     includes = ["include"],
     deps = ["//:ccc"],
+    copts = COPTS,
 )
 
 cc_test(
@@ -10,6 +16,7 @@ cc_test(
     srcs = ["utils/clog_test.c"],
     includes = ["include"],
     deps = ["//:ccc"],
+    copts = COPTS,
 )
 
 cc_test(
@@ -17,13 +24,15 @@ cc_test(
     srcs = ["utils/panic_test.c"],
     includes = ["include"],
     deps = ["//:ccc"],
+    copts = COPTS,
 )
 
 cc_test(
     name = "panicf0_test",
     srcs = ["utils/panicf0_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"]
+    deps = ["//:ccc"],
+    copts = COPTS,
 )
 
 cc_test(
@@ -31,13 +40,15 @@ cc_test(
     srcs = ["utils/panicf_test.c"],
     includes = ["include"],
     deps = ["//:ccc"],
+    copts = COPTS,
 )
 
 cc_test(
     name = "bits_test",
     srcs = ["utils/bits_test.c"],
     includes = ["include"],
-    deps = ["//:ccc"]
+    deps = ["//:ccc"],
+    copts = COPTS,
 )
 
 cc_test(
@@ -45,4 +56,5 @@ cc_test(
     srcs = ["container/sdb_test.c"],
     includes = ["include"],
     deps = ["//:ccc"],
+    copts = COPTS,
 )

@@ -4,10 +4,16 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+load(
+    "//:opts.bzl",
+    "COPTS",
+)
+
 # https://docs.bazel.build/versions/master/be/c-cpp.html#cc_library
 cc_library(
     name = "ccc",
     srcs = glob(["src/utils/*.c", "src/container/*.c"]),
     hdrs = glob(["include/ccc/utils/*.h", "include/ccc/container/*.h"]) ,
     includes = ["include"],
+    copts = COPTS,
 )
