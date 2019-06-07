@@ -1,0 +1,4 @@
+#! powershell
+
+# Bazel
+bazel clean

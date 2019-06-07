@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+set -ex;
+
 # The test cases
 readonly tests=(
     "tests:argc_test"
