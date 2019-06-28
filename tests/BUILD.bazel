@@ -58,3 +58,11 @@ cc_test(
     deps = ["//:ccc"],
     copts = COPTS,
 )
+
+cc_test(
+    name = "ownership_test",
+    srcs = ["container/ownership_test.c"],
+    includes = ["include"],
+    deps = ["//:ccc"],
+    copts = COPTS,
+)

@@ -8,6 +8,7 @@ readonly tests=(
     "tests:clog_test"
     "tests:sdb_test"
     "tests:bits_test"
+    "tests:ownership_test"
 )
 
 bazel test --test_output=errors "${tests[@]}"

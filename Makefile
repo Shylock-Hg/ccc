@@ -31,13 +31,15 @@ TEST_SOURCES = tests/utils/argc_test.c \
 	tests/utils/panic_test.c \
 	tests/utils/panicf_test.c \
 	tests/utils/panicf0_test.c \
-	tests/container/sdb_test.c
+	tests/container/sdb_test.c \
+	tests/container/ownership_test.c
 TEST_OBJECTS = $(patsubst %.c, %.o, $(TEST_SOURCES))
 TESTS = $(patsubst %.o, %, $(TEST_OBJECTS))
 TEST_SOURCES_P = tests/utils/argc_test.c \
 	tests/utils/bits_test.c \
 	tests/utils/clog_test.c \
-	tests/container/sdb_test.c
+	tests/container/sdb_test.c \
+	tests/container/ownership_test.c
 TESTS_P = $(patsubst %.c, %, $(TEST_SOURCES_P))
 
 APP_SOURCES = $(TEST_SOURCES)

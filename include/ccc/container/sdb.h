@@ -13,9 +13,11 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#include "./ownership.h"
+
 /// the stb_t meas the pointer to Simple Dynamic Buffer
 /// compatiable to c-style string with the NULL ending
-typedef uint8_t* sdb_t;
+typedef uint8_t* __OWNER sdb_t;
 
 /// \brief create the empty sdb_t
 /// \param cap the capacity
