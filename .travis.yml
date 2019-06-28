@@ -122,7 +122,6 @@ matrix:
 before_install:
     - eval "${MATRIX_EVAL}"
     - ./.ci/install-Unix.sh
-    - sudo apt install valgrind
 
 script :
     - bazel build --jobs=$(nproc) ccc //tests/...
