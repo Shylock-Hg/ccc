@@ -5,8 +5,11 @@
  * */
 
 #include <ccc/utils/panic.h>
+#include <ccc/utils/testing.h>
 
 int main(int argc, char* argv[]) {
     //    panic();
-    return 0;
+    TESTING_CASE("Panic empty input");
+    TESTING_REPORT();
+    return TESTING_FAILED();
 }

@@ -28,12 +28,6 @@ endif
 TEST_SOURCES = $(wildcard  tests/*/*.c)
 TEST_OBJECTS = $(patsubst %.c, %.o, $(TEST_SOURCES))
 TESTS = $(patsubst %.o, %, $(TEST_OBJECTS))
-TEST_SOURCES_P = tests/utils/argc_test.c \
-	tests/utils/bits_test.c \
-	tests/utils/clog_test.c \
-	tests/container/sdb_test.c \
-	tests/container/ownership_test.c
-TESTS_P = $(patsubst %.c, %, $(TEST_SOURCES_P))
 
 APP_SOURCES = $(TEST_SOURCES)
 APP_OBJECTS = $(patsubst %.c, %.o, $(APP_SOURCES))
@@ -93,7 +87,13 @@ $(addprefix $(DIR_BUILD_D)/, $(LIB_OBJECTS)) : $(DIR_BUILD_D)/%.o : %.c Makefile
 $(DIR_BUILD_D)/%.d : ;
 .PRECIOUS : $(DIR_BUILD_D)/%.d
 
-$(DIR_BUILD) $(DIR_BUILD_R) $(DIR_BUILD_D): % : %
+$(DIR_BUILD) :
+	$(MKDIR) -p $@
+
+$(DIR_BUILD_D) : $(DIR_BUILD)
+	$(MKDIR) -p $@
+
+$(DIR_BUILD_R) : $(DIR_BUILD)
 	$(MKDIR) -p $@
 
 install : all
@@ -123,8 +123,8 @@ uninstall :
 	$(RM) -rf "$(prefix)/include/$(LIB_NAME)"
 #	$(RM) -f  "$(prefix)/bin/$(APP)"
 
-test : $(addprefix $(DIR_BUILD_D)/, $(TESTS_P))
-	set -ex; for test in $^; do $(VALGRIND) ./$${test}; echo -en "\n\n\n\n"; done
+test : $(addprefix $(DIR_BUILD_D)/, $(TESTS))
+	set -e; for test in $^; do $(VALGRIND) ./$${test}; echo -en "\n\n"; done
 
 clean :
 	$(RM) -rf $(DIR_BUILD)

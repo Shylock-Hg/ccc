@@ -24,6 +24,14 @@ extern "C" {
 #endif
 #endif
 
+#if defined(unix) && unix
+#define UNUSED __attribute__((unused))
+#define UNUSED_F(v)
+#else
+#define UNUSED
+#define UNUSED_F(v) (void)(v)
+#endif
+
 /// \brief the memory aligned size
 #if defined(__GNUC__) || defined(__clang__)
 #define PACKED __attribute__((__packed__))

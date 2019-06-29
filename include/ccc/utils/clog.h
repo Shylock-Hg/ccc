@@ -14,6 +14,8 @@ extern "C" {
 
 #include <stdio.h>
 
+#include "./tty.h"
+
 #define LOG_VERBOSITY_ERROR 0
 #define LOG_VERBOSITY_WARN 1
 #define LOG_VERBOSITY_INFO 2
@@ -53,10 +55,14 @@ typedef enum {
 #endif
 
 #if WITH_LOG_COLORFUL
-#define LOG_COLOR_ERROR "\033[1;31m"
-#define LOG_COLOR_WARN "\033[1;35m"
-#define LOG_COLOR_BOLD "\033[1m"
-#define LOG_COLOR_END "\033[0m"
+#define LOG_COLOR_ERROR                                                  \
+    TTY_COLOR_PREFIX TTY_COLOR_BOLD TTY_COLOR_DELIMITER TTY_COLOR_FG_RED \
+        TTY_COLOR_SUFFIX
+#define LOG_COLOR_WARN                                                       \
+    TTY_COLOR_PREFIX TTY_COLOR_BOLD TTY_COLOR_DELIMITER TTY_COLOR_FG_MAGENTA \
+        TTY_COLOR_SUFFIX
+#define LOG_COLOR_BOLD TTY_COLOR_PREFIX TTY_COLOR_BOLD TTY_COLOR_SUFFIX
+#define LOG_COLOR_END TTY_COLOR_RESET_NOW
 #else
 #define LOG_COLOR_ERROR
 #define LOG_COLOR_WARN
