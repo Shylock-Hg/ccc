@@ -50,15 +50,14 @@ const char* __testing_case = "Testing";
         }                             \
     } while (0);
 
-#define TESTING_EXPECT(prod)                \
-    do {                                    \
-        do {                                \
-            __tested_count++;               \
-            if (!(prod)) {                  \
-                __failed_count++;           \
-                __ON_TESTING_FAILED(#prod); \
-            }                               \
-        } while (0);
+#define TESTING_EXPECT(prod)            \
+    do {                                \
+        __tested_count++;               \
+        if (!(prod)) {                  \
+            __failed_count++;           \
+            __ON_TESTING_FAILED(#prod); \
+        }                               \
+    } while (0);
 
 #define TESTING_ASSERT_M(prod, msg)   \
     do {                              \
