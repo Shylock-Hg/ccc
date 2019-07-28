@@ -12,3 +12,11 @@
 #define DERIVED(base_ptr, derived_type, field)        \
     ((derived_type*)((const volatile char*)base_ptr - \
                      offsetof(derived_type, field)))
+
+/// Construct the derived type and reture the base pointer
+#define DERIVED_NEW(base_type, base_field, derived_type, derived_constructor, \
+                    ...)                                                      \
+    ({                                                                        \
+        derived_type* d = derived_constructor(__VA_ARGS__);                   \
+        (base_type*)(&(d->base_field));                                       \
+    })
