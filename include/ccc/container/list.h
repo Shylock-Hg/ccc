@@ -41,11 +41,12 @@ typedef struct dlist_entry {
 DECL_LIST_ENTRY(s, 1);
 DECL_LIST_ENTRY(d, 2);
 
-#define DECL_LIST(p) typedef struct p##list {\
-    p##list_entry_t* head;\
-    p##list_entry_t* tail;\
-    size_t len;\
-} p##list_t;
+#define DECL_LIST(p)           \
+    typedef struct p##list {   \
+        p##list_entry_t* head; \
+        p##list_entry_t* tail; \
+        size_t len;            \
+    } p##list_t;
 
 DECL_LIST(s);
 DECL_LIST(d);
@@ -67,6 +68,9 @@ typedef struct list_const_iterator {
 #define LIST_SIZE(l) (l->len)
 #define LIST_HEAD(l) (l->head)
 #define LIST_TAIL(l) (l->tail)
+
+#define LIST_ENTRY_NEXT(e) (e->next[FORWARD])
+#define LIST_ENTRY_PREV(e) (e->next[BACKWARD])
 
 #define LIST_ITER_CURRENT(i) (i->current)
 
@@ -231,7 +235,6 @@ static inline dlist_t* backward_s2d(slist_t* s) __BORROWER {
                        LIST_SIZE(s));
 }
 
-
 /// Declare a dummy slist node
 DECL_SLIST_NODE(sdummy, const char* desc);
 static inline sdummy_t* sdummy_new(void) {
@@ -350,17 +353,35 @@ static inline dlist_t* dlist_new_c(dlist_entry_t* head, dlist_entry_t* tail,
             node_destructor(node);                                     \
         }                                                              \
         list_iterator_release(it);                                     \
-        dummy_release(dummy_head); \
-        dummy_release(dummy_tail); \
+        dummy_release(dummy_head);                                     \
+        dummy_release(dummy_tail);                                     \
         free(d);                                                       \
     } while (0);
 
-static inline void list_push_back(slist_t* l, slist_entry_t* entry) {
+static inline void slist_push_front(slist_t* l, slist_entry_t* entry) {
     assert(l != NULL);
     assert(entry != NULL);
-    slist_entry_t* tmp = LIST_BEGIN(l);
-    while (tmp != LIST_END(l)) {
+    slist_entry_t* head = LIST_HEAD(l);
+    slist_entry_t* first = LIST_ENTRY_NEXT(head);
+    SLIST_ENTRY_INIT(entry, first);
+    SLIST_ENTRY_INIT(head, entry);
+    LIST_SIZE(l) += 1;
+}
+
+static inline void slist_push_back(slist_t* l, slist_entry_t* entry) {
+    assert(l != NULL);
+    assert(entry != NULL);
+    slist_entry_t* head = LIST_HEAD(l);
+    slist_entry_t* tail = LIST_TAIL(l);
+    slist_entry_t* last = tail;
+    slist_entry_t* tmp = LIST_ENTRY_NEXT(head);
+    while (tmp != tail) {
+        last = LIST_ENTRY_NEXT(last);
+        tmp = LIST_ENTRY_NEXT(tmp);
     }
+    SLIST_ENTRY_INIT(entry, tmp);
+    SLIST_ENTRY_INIT(last, entry);
+    LIST_SIZE(l) += 1;
 }
 
 #ifdef __cplusplus
