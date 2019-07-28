@@ -13,6 +13,7 @@ extern "C" {
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "../utils/compiletime.h"
 #include "../utils/oo.h"
@@ -184,6 +185,86 @@ static inline void list_iterator_next(list_iterator_t* i) {
     for (list_iterator_init(iterator); list_iterator_valid(iterator, list); \
          list_iterator_next(iterator))
 
+/// Declare a dummy slist node
+DECL_SLIST_NODE(sdummy, const char* desc);
+static inline sdummy_t* sdummy_new(void) {
+    static const char* a = "Dummy slist node!";
+    sdummy_t* sdummy_node = malloc(sizeof(sdummy_t));
+    sdummy_node->desc = a;
+    sdummy_node->sentry.next[0] = NULL;
+    return sdummy_node;
+}
+static inline void dummy_release(void* dummy) { free(dummy); }
+
+
+/// Create New single linked list
+static inline slist_t* slist_new(void) {
+    // Mock dummy nodes
+    slist_entry_t* dummy_head = SLIST_NODE_NEW(sdummy_t, sdummy_new);
+    slist_entry_t* dummy_tail = SLIST_NODE_NEW(sdummy_t, sdummy_new);
+    dummy_head->next[0] = dummy_tail;
+    SLIST_ENTRY_INIT(dummy_head, dummy_tail);
+
+    slist_t* s = malloc(sizeof(slist_t));
+    assert(s != NULL);
+    s->head = dummy_head;
+    s->tail = dummy_tail;
+    s->len = 0UL;
+    return s;
+}
+
+/// Create New single linked list from
+/// Make sure the head and tail are dummy node !
+static inline slist_t* slist_new_c(slist_entry_t* head, slist_entry_t* tail,
+                                   size_t len) {
+    slist_t* s = malloc(sizeof(slist_t));
+    assert(s != NULL);
+    s->head = head;
+    s->tail = tail;
+    s->len = len;
+    return s;
+}
+
+/// Declare a dummy slist node
+DECL_DLIST_NODE(ddummy, const char* desc);
+static inline ddummy_t* ddummy_new(void) {
+    static const char* a = "Dummy dlist node!";
+    ddummy_t* ddummy_node = malloc(sizeof(ddummy_t));
+    ddummy_node->desc = a;
+    ddummy_node->dentry.next[0] = NULL;
+    ddummy_node->dentry.next[0] = NULL;
+    return ddummy_node;
+}
+
+static inline slist_entry_t* forward_de2se(dlist_entry_t* d) __BORROWER;
+static inline slist_entry_t* backward_de2se(dlist_entry_t* d) __BORROWER;
+/// Create New double linked list
+static inline dlist_t* dlist_new(void) {
+    dlist_entry_t* dummy_head = DLIST_NODE_NEW(ddummy_t, ddummy_new);
+    dlist_entry_t* dummy_tail = DLIST_NODE_NEW(ddummy_t, ddummy_new);
+    DLIST_ENTRY_INIT(dummy_head, forward_de2se(dummy_tail), NULL);
+    DLIST_ENTRY_INIT(dummy_tail, NULL, backward_de2se(dummy_head));
+
+    dlist_t* d = malloc(sizeof(dlist_t));
+    assert(d != NULL);
+    d->head = dummy_head;
+    d->tail = dummy_tail;
+    d->len = 0UL;
+    return d;
+}
+
+/// Create New double linked list from
+/// Make sure the head and tail are dummy
+static inline dlist_t* dlist_new_c(dlist_entry_t* head, dlist_entry_t* tail,
+                                   size_t len) {
+    dlist_t* d = malloc(sizeof(dlist_t));
+    assert(d != NULL);
+    d->head = head;
+    d->tail = tail;
+    d->len = len;
+    return d;
+}
+
 static inline slist_entry_t* forward_de2se(dlist_entry_t* d) __BORROWER {
     assert(d != NULL);
 
@@ -235,43 +316,6 @@ static inline dlist_t* backward_s2d(slist_t* s) __BORROWER {
                        LIST_SIZE(s));
 }
 
-/// Declare a dummy slist node
-DECL_SLIST_NODE(sdummy, const char* desc);
-static inline sdummy_t* sdummy_new(void) {
-    static const char* a = "Dummy slist node!";
-    sdummy_t* sdummy_node = malloc(sizeof(sdummy_t));
-    sdummy_node->desc = a;
-    sdummy_node->sentry.next[0] = NULL;
-}
-static inline void dummy_release(void* dummy) { free(dummy); }
-
-/// Create New single linked list
-static inline slist_t* slist_new(void) {
-    // Mock dummy nodes
-    slist_entry_t* dummy_head = SLIST_NODE_NEW(sdummy_t, sdummy_new);
-    slist_entry_t* dummy_tail = SLIST_NODE_NEW(sdummy_t, sdummy_new);
-    dummy_head->next[0] = dummy_tail;
-    SLIST_ENTRY_INIT(dummy_head, dummy_tail);
-
-    slist_t* s = malloc(sizeof(slist_t));
-    assert(s != NULL);
-    s->head = dummy_head;
-    s->tail = dummy_tail;
-    s->len = 0UL;
-    return s;
-}
-
-/// Create New single linked list from
-/// Make sure the head and tail are dummy node !
-static inline slist_t* slist_new_c(slist_entry_t* head, slist_entry_t* tail,
-                                   size_t len) {
-    slist_t* s = malloc(sizeof(slist_t));
-    assert(s != NULL);
-    s->head = head;
-    s->tail = tail;
-    s->len = len;
-    return s;
-}
 
 /// Release the single linked list
 /// \param s the slist_t*
@@ -297,42 +341,6 @@ static inline slist_t* slist_new_c(slist_entry_t* head, slist_entry_t* tail,
         free(s);                                                       \
     } while (0);
 
-/// Declare a dummy slist node
-DECL_DLIST_NODE(ddummy, const char* desc);
-static inline ddummy_t* ddummy_new(void) {
-    static const char* a = "Dummy dlist node!";
-    ddummy_t* ddummy_node = malloc(sizeof(ddummy_t));
-    ddummy_node->desc = a;
-    ddummy_node->dentry.next[0] = NULL;
-    ddummy_node->dentry.next[0] = NULL;
-}
-
-/// Create New double linked list
-static inline dlist_t* dlist_new(void) {
-    dlist_entry_t* dummy_head = DLIST_NODE_NEW(ddummy_t, ddummy_new);
-    dlist_entry_t* dummy_tail = DLIST_NODE_NEW(ddummy_t, ddummy_new);
-    DLIST_ENTRY_INIT(dummy_head, forward_de2se(dummy_tail), NULL);
-    DLIST_ENTRY_INIT(dummy_tail, NULL, backward_de2se(dummy_head));
-
-    dlist_t* d = malloc(sizeof(dlist_t));
-    assert(d != NULL);
-    d->head = dummy_head;
-    d->tail = dummy_tail;
-    d->len = 0UL;
-    return d;
-}
-
-/// Create New double linked list from
-/// Make sure the head and tail are dummy
-static inline dlist_t* dlist_new_c(dlist_entry_t* head, dlist_entry_t* tail,
-                                   size_t len) {
-    dlist_t* d = malloc(sizeof(dlist_t));
-    assert(d != NULL);
-    d->head = head;
-    d->tail = tail;
-    d->len = len;
-    return d;
-}
 
 /// Release a double-lined list
 /// \param d the dlist_t*
