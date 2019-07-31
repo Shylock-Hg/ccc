@@ -370,7 +370,7 @@ static inline void slist_push_front(slist_t* l, slist_entry_t* entry) {
     assert(l != NULL);
     assert(entry != NULL);
     slist_entry_t* head = LIST_HEAD(l);
-    slist_entry_t* first = LIST_ENTRY_NEXT(head);
+    slist_entry_t* first = LIST_BEGIN(l);
     SLIST_ENTRY_INIT(entry, first);
     SLIST_ENTRY_INIT(head, entry);
     LIST_SIZE(l) += 1;
@@ -379,16 +379,32 @@ static inline void slist_push_front(slist_t* l, slist_entry_t* entry) {
 static inline void slist_push_back(slist_t* l, slist_entry_t* entry) {
     assert(l != NULL);
     assert(entry != NULL);
-    slist_entry_t* head = LIST_HEAD(l);
     slist_entry_t* tail = LIST_TAIL(l);
-    slist_entry_t* last = tail;
-    slist_entry_t* tmp = LIST_ENTRY_NEXT(head);
+    slist_entry_t* last = LIST_HEAD(l);
+    slist_entry_t* tmp = LIST_BEGIN(l);
     while (tmp != tail) {
         last = LIST_ENTRY_NEXT(last);
         tmp = LIST_ENTRY_NEXT(tmp);
     }
     SLIST_ENTRY_INIT(entry, tmp);
     SLIST_ENTRY_INIT(last, entry);
+    LIST_SIZE(l) += 1;
+}
+
+static inline void slist_insert(slist_t* l, slist_entry_t* entry, size_t i) {
+    assert(l != NULL);
+    assert(entry != NULL);
+    if (i > LIST_SIZE(l)) {
+        return;  // Out of range
+    }
+    slist_entry_t* tail = LIST_TAIL(l);
+    slist_entry_t* tmp = LIST_HEAD(l);
+    while (tmp != tail && i--) {
+        tmp = LIST_ENTRY_NEXT(tmp);
+    }
+    slist_entry_t* next = LIST_ENTRY_NEXT(tmp);
+    SLIST_ENTRY_INIT(entry, next);
+    SLIST_ENTRY_INIT(tmp, entry);
     LIST_SIZE(l) += 1;
 }
 
