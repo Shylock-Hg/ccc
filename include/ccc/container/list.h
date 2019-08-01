@@ -34,6 +34,37 @@ typedef struct dlist_entry {
 } dlist_entry_t;
 */
 
+typedef struct list_entry {
+    struct list_entry* entry;
+} list_entry_t;
+
+/// !! New proposal
+/// Single-Linked List
+/// struct {
+///     list_entry_t* forward[2];  // head, tail
+///     size_t len;
+/// }
+
+/// Single-Linked List Node
+/// struct {
+///     list_entry_t next;
+///     ...
+/// }
+
+/// Double-Linked List Node
+/// struct {
+///     list_entry_t prev;
+///     list_entry_t next;
+///     ...
+/// }
+
+/// Double-Linked List
+/// struct {
+///     list_entry_t* forward[2];  // head, tail
+///     list_entry_t* backward[2];  // head, tail
+///     size_t len;
+/// }
+
 #define DECL_LIST_ENTRY(p, n)        \
     typedef struct p##list_entry {   \
         struct slist_entry* next[n]; \
@@ -406,6 +437,17 @@ static inline void slist_insert(slist_t* l, slist_entry_t* entry, size_t i) {
     SLIST_ENTRY_INIT(entry, next);
     SLIST_ENTRY_INIT(tmp, entry);
     LIST_SIZE(l) += 1;
+}
+
+static inline void dlist_push_front(dlist_t* l, dlist_entry_t* entry) {
+    assert(l != NULL);
+    assert(entry != NULL);
+    dlist_entry_t* head = LIST_HEAD(l);
+    dlist_entry_t* first = forward_se2de(LIST_BEGIN(l));
+//    DLIST_ENTRY_INIT(entry, first, head);
+//    DLIST_ENTRY_INIT(head, entry, NULL);
+//    DLIST_ENTRY_INIT(first, NULL, entry);
+//    LIST_SIZE(l) += 1;
 }
 
 #ifdef __cplusplus
