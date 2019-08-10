@@ -11,9 +11,9 @@ extern "C" {
 #endif
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "../utils/compiletime.h"
 #include "../utils/oo.h"
@@ -34,86 +34,89 @@ typedef struct dlist_entry {
 } dlist_entry_t;
 */
 
-typedef struct list_entry {
-    struct list_entry* entry;
-} list_entry_t;
-
 /// !! New proposal
 /// Single-Linked List
 /// struct {
-///     list_entry_t* forward[2];  // head, tail
+///     chained_t* forward[2];  // head, tail
 ///     size_t len;
 /// }
 
 /// Single-Linked List Node
 /// struct {
-///     list_entry_t next;
+///     chained_t next;
 ///     ...
 /// }
 
+/// forward[HEAD] --> next0 --> next1 --> ... nextn  <- forward[TAIL]
+
 /// Double-Linked List Node
 /// struct {
-///     list_entry_t prev;
-///     list_entry_t next;
+///     chained_t next;
+///     chained_t prev;
 ///     ...
 /// }
 
 /// Double-Linked List
 /// struct {
-///     list_entry_t* forward[2];  // head, tail
-///     list_entry_t* backward[2];  // head, tail
+///     chained_t* forward[2];  // head, tail
+///     chained_t* backward[2];  // head, tail
 ///     size_t len;
 /// }
 
-#define DECL_LIST_ENTRY(p, n)        \
-    typedef struct p##list_entry {   \
-        struct slist_entry* next[n]; \
-    } p##list_entry_t
+/// forward[HEAD] -> next0 -> next1 -> ... nextn <- forward[TAIL]
+/// backward[HEAD] -> prev0 <- prev1 <- ... prevn <- backward[TAIL]
 
-DECL_LIST_ENTRY(s, 1);
-DECL_LIST_ENTRY(d, 2);
+typedef enum { HEAD, TAIL, LIST_HANDLES } list_handle;
+static_assert(LIST_HANDLES == 2, "Unexpected list handles!");
 
-#define DECL_LIST(p)           \
-    typedef struct p##list {   \
-        p##list_entry_t* head; \
-        p##list_entry_t* tail; \
-        size_t len;            \
-    } p##list_t;
+typedef struct slist {
+    chained_t* forward[2];  // head, tail
+    size_t len;
+} slist_t;
 
-DECL_LIST(s);
-DECL_LIST(d);
-
-static_assert(sizeof(slist_t) == sizeof(dlist_t),
-              "Unexpected sizeof(slist_t) != sizeof(dlist_t)");
+typedef struct dlist {
+    chained_t* forward[2];   // head, tail
+    chained_t* backward[2];  // head, tail
+    size_t len;
+} dlist_t;
 
 typedef struct list_iterator {
-    slist_entry_t* current;
+    chained_t* current;
 } list_iterator_t;
 
 typedef struct list_const_iterator {
-    const slist_entry_t* current;
+    const chained_t* current;
 } list_const_iterator_t;
 
 /// [begin, end)
-#define LIST_BEGIN(l) (l->head->next[0])
-#define LIST_END(l) (l->tail)
+//#define LIST_BEGIN(l) (l->forward[HEAD]->to)
+#define LIST_BEGIN(l) (chained_to(l->forward[HEAD]))
+#define LIST_END(l) (l->forward[TAIL])
 #define LIST_SIZE(l) (l->len)
-#define LIST_HEAD(l) (l->head)
-#define LIST_TAIL(l) (l->tail)
+#define LIST_HEAD(l) (l->forward[HEAD])
+#define LIST_TAIL(l) (l->forward[TAIL])
+#define LIST_BACKWARD_HEAD(l) (l->backward[HEAD])
+#define LIST_BACKWARD_TAIL(l) (l->backward[TAIL])
 
-#define LIST_ENTRY_NEXT(e) (e->next[FORWARD])
-#define LIST_ENTRY_PREV(e) (e->next[BACKWARD])
+#define LIST_ENTRY_NEXT(e) (chained_to(e))
+#define LIST_ENTRY_PREV(e) (chained_to(e))
 
 #define LIST_ITER_CURRENT(i) (i->current)
 
-#define SLIST_ENTRY_INIT(entry, n) \
+#define LIST_ENTRY_INIT(entry, to) \
     do {                           \
-        entry->next[0] = n;        \
+        chained_set(entry, to);    \
     } while (0);
-#define DLIST_ENTRY_INIT(entry, n, p) \
-    do {                              \
-        entry->next[FORWARD] = n;     \
-        entry->next[BACKWARD] = p;    \
+
+#define SLIST_ENTRY_INIT(entry, to) \
+    do {                            \
+        chained_set(entry, to);     \
+    } while (0);
+
+#define DLIST_ENTRY_INIT(entry_next, next, entry_prev, prev) \
+    do {                                                     \
+        chained_set(entry_next, next);                       \
+        chained_set(entry_prev, prev);                       \
     } while (0);
 
 /// Delare the single linked list node type
@@ -121,13 +124,14 @@ typedef struct list_const_iterator {
 /// node_t which derived from single-linked list entry
 #define DECL_SLIST_NODE(type, ...) \
     typedef struct type {          \
-        slist_entry_t sentry;      \
+        chained_t next;            \
         __VA_ARGS__;               \
     } type##_t
 
 #define DECL_DLIST_NODE(type, ...) \
     typedef struct type {          \
-        dlist_entry_t dentry;      \
+        chained_t next;            \
+        chained_t prev;            \
         __VA_ARGS__;               \
     } type##_t
 
@@ -135,9 +139,8 @@ typedef struct list_const_iterator {
 /// \param node_type the type of the node structure
 /// \param node_constructor the node constructor
 /// \param args of constrcutor
-#define SLIST_NODE_NEW(node_type, node_constructor, ...)            \
-    DERIVED_NEW(slist_entry_t, sentry, node_type, node_constructor, \
-                ##__VA_ARGS__)
+#define SLIST_NODE_NEW(node_type, node_constructor, ...) \
+    CHAINED_NEW(next, node_type, node_constructor, ##__VA_ARGS__)
 /// Release the single-linked list node
 /// \param node_destructor the destructor of the node structure
 /// \param obj the pointer to node structure
@@ -145,11 +148,23 @@ typedef struct list_const_iterator {
     do {                                         \
         node_destructor(obj);                    \
     } while (0);
-#define DLIST_NODE_NEW(node_type, node_constructor, ...)            \
-    DERIVED_NEW(dlist_entry_t, dentry, node_type, node_constructor, \
-                ##__VA_ARGS__)
+#define DLIST_NODE_NEW(node_type, node_constructor, ...) \
+    CHAINED_NEW(next, node_type, node_constructor, ##__VA_ARGS__)
+/// Get prev pointer from next pointer
+#define DLIST_NEXT_PREV(p, node_type) MEMBER(p, node_type, next, prev)
 #define DLIST_NODE_RELEASE(node_destructor, obj) \
     SLIST_NODE_RELEASE(node_destructor, obj)
+
+/// Very evil !!
+/// Need assume the dlist `prev` just follow the `next`
+static inline chained_t* dlist_next_prev(chained_t* next) {
+    assert(next != NULL);
+    return next + 1;
+}
+static inline chained_t* dlist_prev_next(chained_t* prev) {
+    assert(prev != NULL);
+    return prev - 1;
+}
 
 /// Create A list iterator from single-linked list
 static inline list_iterator_t* slist_iterator_new(const slist_t* l) {
@@ -158,7 +173,7 @@ static inline list_iterator_t* slist_iterator_new(const slist_t* l) {
     if (lit == NULL) {
         return lit;
     }
-    lit->current = LIST_BEGIN(l);
+    LIST_ITER_CURRENT(lit) = LIST_BEGIN(l);
     return lit;
 }
 
@@ -171,9 +186,9 @@ static inline list_iterator_t* dlist_iterator_new(
         return lit;
     }
     if (FORWARD == direction) {
-        lit->current = (slist_entry_t*)(l->head->next + FORWARD);
+        LIST_ITER_CURRENT(lit) = LIST_HEAD(l);  // Forward iterate
     } else if (BACKWARD == direction) {
-        lit->current = (slist_entry_t*)(l->tail->next + BACKWARD);
+        LIST_ITER_CURRENT(lit) = LIST_TAIL(l);  // Backward iterate
     } else {
         panic("Invalid list iterator direction %d!\n", direction);
     }
@@ -185,35 +200,27 @@ static inline void list_iterator_release(list_iterator_t* i) {
     free(i);
 }
 
-static inline void list_iterator_init(list_iterator_t* i, const void* list) {
-    assert(i != NULL);
-    assert(list != NULL);
-    slist_t* l = (slist_t*)list;  // Treate dlist as slist
-    i->current = LIST_BEGIN(l);
-}
+#define LIST_ITERATOR_INIT(i, l)              \
+    do {                                      \
+        LIST_ITER_CURRENT(i) = LIST_BEGIN(l); \
+    } while (0);
 
-static inline bool list_iterator_valid(const list_iterator_t* i,
-                                       const void* list) {
-    assert(i != NULL);
-    assert(list != NULL);
-    slist_t* l = (slist_t*)list;  // Treate dlist as slist
-    return i->current != LIST_END(l);
-}
+#define LIST_ITERATOR_VALID(i, l) (LIST_ITER_CURRENT(i) != LIST_END(l))
 
 static inline void list_iterator_next(list_iterator_t* i) {
     assert(i != NULL);
-    i->current = i->current->next[0];
+    LIST_ITER_CURRENT(i) = chained_to(i->current);
 }
 
 /// Iterate the list
 /// ! Don't modify the iterator itself
 /// Choose your start
 #define foreach(iterator, list) \
-    for (; list_iterator_valid(iterator, list); list_iterator_next(iterator))
+    for (; LIST_ITERATOR_VALID(iterator, list); list_iterator_next(iterator))
 
 /// Iterate the list from head
-#define list_foreach(iterator, list)                                        \
-    for (list_iterator_init(iterator); list_iterator_valid(iterator, list); \
+#define list_foreach(iterator, list)                                       \
+    for (LIST_ITER_CURRENT(iterator); LIST_ITERATOR_VALID(iterator, list); \
          list_iterator_next(iterator))
 
 /// Declare a dummy slist node
@@ -222,38 +229,37 @@ static inline sdummy_t* sdummy_new(void) {
     static const char* a = "Dummy slist node!";
     sdummy_t* sdummy_node = malloc(sizeof(sdummy_t));
     sdummy_node->desc = a;
-    sdummy_node->sentry.next[0] = NULL;
+    SLIST_ENTRY_INIT(&(sdummy_node->next), NULL);
+    return sdummy_node;
+}
+static inline sdummy_t* sdummy_new_c(chained_t* next) {
+    static const char* a = "Dummy slist node!";
+    sdummy_t* sdummy_node = malloc(sizeof(sdummy_t));
+    sdummy_node->desc = a;
+    SLIST_ENTRY_INIT(&(sdummy_node->next), next);
     return sdummy_node;
 }
 static inline void dummy_release(void* dummy) { free(dummy); }
 
+/// Create New single linked list from
+/// Make sure the head and tail are dummy node !
+static inline slist_t* slist_new_c(chained_t* head, chained_t* tail,
+                                   size_t len) {
+    slist_t* s = malloc(sizeof(slist_t));
+    assert(s != NULL);
+    s->forward[HEAD] = head;
+    s->forward[TAIL] = tail;
+    LIST_SIZE(s) = len;
+    return s;
+}
 
 /// Create New single linked list
 static inline slist_t* slist_new(void) {
     // Mock dummy nodes
-    slist_entry_t* dummy_head = SLIST_NODE_NEW(sdummy_t, sdummy_new);
-    slist_entry_t* dummy_tail = SLIST_NODE_NEW(sdummy_t, sdummy_new);
-    dummy_head->next[0] = dummy_tail;
-    SLIST_ENTRY_INIT(dummy_head, dummy_tail);
+    chained_t* dummy_tail = SLIST_NODE_NEW(sdummy_t, sdummy_new);
+    chained_t* dummy_head = SLIST_NODE_NEW(sdummy_t, sdummy_new_c, dummy_tail);
 
-    slist_t* s = malloc(sizeof(slist_t));
-    assert(s != NULL);
-    s->head = dummy_head;
-    s->tail = dummy_tail;
-    s->len = 0UL;
-    return s;
-}
-
-/// Create New single linked list from
-/// Make sure the head and tail are dummy node !
-static inline slist_t* slist_new_c(slist_entry_t* head, slist_entry_t* tail,
-                                   size_t len) {
-    slist_t* s = malloc(sizeof(slist_t));
-    assert(s != NULL);
-    s->head = head;
-    s->tail = tail;
-    s->len = len;
-    return s;
+    return slist_new_c(dummy_head, dummy_tail, 0UL);
 }
 
 /// Declare a dummy slist node
@@ -262,52 +268,52 @@ static inline ddummy_t* ddummy_new(void) {
     static const char* a = "Dummy dlist node!";
     ddummy_t* ddummy_node = malloc(sizeof(ddummy_t));
     ddummy_node->desc = a;
-    ddummy_node->dentry.next[0] = NULL;
-    ddummy_node->dentry.next[0] = NULL;
+    DLIST_ENTRY_INIT(&(ddummy_node->next), NULL, &(ddummy_node->prev), NULL);
     return ddummy_node;
 }
-
-static inline slist_entry_t* forward_de2se(dlist_entry_t* d) __BORROWER;
-static inline slist_entry_t* backward_de2se(dlist_entry_t* d) __BORROWER;
-/// Create New double linked list
-static inline dlist_t* dlist_new(void) {
-    dlist_entry_t* dummy_head = DLIST_NODE_NEW(ddummy_t, ddummy_new);
-    dlist_entry_t* dummy_tail = DLIST_NODE_NEW(ddummy_t, ddummy_new);
-    DLIST_ENTRY_INIT(dummy_head, forward_de2se(dummy_tail), NULL);
-    DLIST_ENTRY_INIT(dummy_tail, NULL, backward_de2se(dummy_head));
-
-    dlist_t* d = malloc(sizeof(dlist_t));
+static inline ddummy_t* ddummy_new_c(chained_t* next, chained_t* prev) {
+    static const char* a = "Dummy dlist node!";
+    ddummy_t* ddummy_node = malloc(sizeof(ddummy_t));
+    ddummy_node->desc = a;
+    DLIST_ENTRY_INIT(&(ddummy_node->next), next, &(ddummy_node->prev), prev);
+    return ddummy_node;
+}
+static inline void ddummy_release(ddummy_t* d) {
     assert(d != NULL);
-    d->head = dummy_head;
-    d->tail = dummy_tail;
-    d->len = 0UL;
-    return d;
+    free(d);
 }
 
 /// Create New double linked list from
 /// Make sure the head and tail are dummy
-static inline dlist_t* dlist_new_c(dlist_entry_t* head, dlist_entry_t* tail,
+static inline dlist_t* dlist_new_c(chained_t* head_next, chained_t* head_prev,
+                                   chained_t* tail_next, chained_t* tail_prev,
                                    size_t len) {
     dlist_t* d = malloc(sizeof(dlist_t));
     assert(d != NULL);
-    d->head = head;
-    d->tail = tail;
-    d->len = len;
+    d->forward[HEAD] = head_next;
+    d->forward[TAIL] = tail_next;
+    d->backward[HEAD] = head_prev;
+    d->backward[TAIL] = tail_prev;
+    LIST_SIZE(d) = len;
     return d;
 }
 
-static inline slist_entry_t* forward_de2se(dlist_entry_t* d) __BORROWER {
-    assert(d != NULL);
+// static inline slist_entry_t* forward_de2se(dlist_entry_t* d) __BORROWER;
+// static inline slist_entry_t* backward_de2se(dlist_entry_t* d) __BORROWER;
+/// Create New double linked list
+static inline dlist_t* dlist_new(void) {
+    chained_t* dummy_head_next = DLIST_NODE_NEW(ddummy_t, ddummy_new);
+    chained_t* dummy_head_prev = DLIST_NEXT_PREV(dummy_head_next, ddummy_t);
+    chained_t* dummy_tail_next =
+        DLIST_NODE_NEW(ddummy_t, ddummy_new_c, NULL, dummy_head_prev);
+    chained_t* dummy_tail_prev = DLIST_NEXT_PREV(dummy_tail_next, ddummy_t);
+    DLIST_ENTRY_INIT(dummy_head_next, dummy_tail_next, dummy_head_prev, NULL);
 
-    return (slist_entry_t*)(d->next + FORWARD);
+    return dlist_new_c(dummy_head_next, dummy_head_prev, dummy_tail_next,
+                       dummy_tail_prev, 0UL);
 }
 
-static inline slist_entry_t* backward_de2se(dlist_entry_t* d) __BORROWER {
-    assert(d != NULL);
-
-    return (slist_entry_t*)(d->next + BACKWARD);
-}
-
+/*
 static inline slist_t* forward_d2s(dlist_t* d) __BORROWER {
     assert(d != NULL);
 
@@ -346,73 +352,72 @@ static inline dlist_t* backward_s2d(slist_t* s) __BORROWER {
     return dlist_new_c(forward_se2de(LIST_TAIL(s)), forward_se2de(LIST_HEAD(s)),
                        LIST_SIZE(s));
 }
-
+*/
 
 /// Release the single linked list
 /// \param s the slist_t*
 /// \param node_type the node structure type
 /// \param node_destructor the node destructor
-#define SLIST_RELEASE(s, node_type, node_destructor)                   \
-    do {                                                               \
-        assert(s != NULL);                                             \
-        slist_entry_t* head = LIST_HEAD(s);                            \
-        slist_entry_t* tail = LIST_TAIL(s);                            \
-        sdummy_t* dummy_head = DERIVED(head, sdummy_t, sentry);        \
-        sdummy_t* dummy_tail = DERIVED(tail, sdummy_t, sentry);        \
-        list_iterator_t* it = slist_iterator_new(s);                   \
-        assert(it != NULL);                                            \
-        while (list_iterator_valid(it)) {                              \
-            node_type* node = DERIVED(it->current, node_type, sentry); \
-            list_iterator_next(it);                                    \
-            node_destructor(node);                                     \
-        }                                                              \
-        list_iterator_release(it);                                     \
-        dummy_release(dummy_head);                                     \
-        dummy_release(dummy_tail);                                     \
-        free(s);                                                       \
+#define SLIST_RELEASE(s, node_type, node_destructor)                           \
+    do {                                                                       \
+        assert(s != NULL);                                                     \
+        chained_t* head = LIST_HEAD(s);                                        \
+        chained_t* tail = LIST_TAIL(s);                                        \
+        sdummy_t* dummy_head = DERIVED(head, sdummy_t, next);                  \
+        sdummy_t* dummy_tail = DERIVED(tail, sdummy_t, next);                  \
+        list_iterator_t* it = slist_iterator_new(s);                           \
+        assert(it != NULL);                                                    \
+        while (LIST_ITERATOR_VALID(it)) {                                      \
+            node_type* node = DERIVED(LIST_ITER_CURRENT(it), node_type, next); \
+            list_iterator_next(it);                                            \
+            node_destructor(node);                                             \
+        }                                                                      \
+        list_iterator_release(it);                                             \
+        dummy_release(dummy_head);                                             \
+        dummy_release(dummy_tail);                                             \
+        free(s);                                                               \
     } while (0);
-
 
 /// Release a double-lined list
 /// \param d the dlist_t*
 /// \param node_type the node structure type
 /// \param the node desctructor
-#define DLIST_RELEASE(d, node_type, node_destructor)                   \
-    do {                                                               \
-        assert(d != NULL);                                             \
-        dlist_entry_t* head = LIST_HEAD(d);                            \
-        dlist_entry_t* tail = LIST_TAIL(d);                            \
-        ddummy_t* dummy_head = DERIVED(head, ddummy_t, sentry);        \
-        ddummy_t* dummy_tail = DERIVED(tail, ddummy_t, sentry);        \
-        list_iterator_t* it = dlist_iterator_new(d, FORWARD);          \
-        assert(it != NULL);                                            \
-        while (list_iterator_valid(it)) {                              \
-            node_type* node = DERIVED(it->current, node_type, dentry); \
-            list_iterator_next(it);                                    \
-            node_destructor(node);                                     \
-        }                                                              \
-        list_iterator_release(it);                                     \
-        dummy_release(dummy_head);                                     \
-        dummy_release(dummy_tail);                                     \
-        free(d);                                                       \
+#define DLIST_RELEASE(d, node_type, node_destructor)                           \
+    do {                                                                       \
+        assert(d != NULL);                                                     \
+        chained_t* head = LIST_HEAD(d);                                        \
+        chained_t* tail = LIST_TAIL(d);                                        \
+        ddummy_t* dummy_head = DERIVED(head, ddummy_t, next);                  \
+        ddummy_t* dummy_tail = DERIVED(tail, ddummy_t, next);                  \
+        list_iterator_t* it = dlist_iterator_new(d, FORWARD);                  \
+        assert(it != NULL);                                                    \
+        while (LIST_ITERATOR_VALID(it)) {                                      \
+            node_type* node = DERIVED(LIST_ITER_CURRENT(it), node_type, next); \
+            list_iterator_next(it);                                            \
+            node_destructor(node);                                             \
+        }                                                                      \
+        list_iterator_release(it);                                             \
+        dummy_release(dummy_head);                                             \
+        dummy_release(dummy_tail);                                             \
+        free(d);                                                               \
     } while (0);
 
-static inline void slist_push_front(slist_t* l, slist_entry_t* entry) {
+static inline void slist_push_front(slist_t* l, chained_t* entry) {
     assert(l != NULL);
     assert(entry != NULL);
-    slist_entry_t* head = LIST_HEAD(l);
-    slist_entry_t* first = LIST_BEGIN(l);
+    chained_t* head = LIST_HEAD(l);
+    chained_t* first = LIST_BEGIN(l);
     SLIST_ENTRY_INIT(entry, first);
     SLIST_ENTRY_INIT(head, entry);
     LIST_SIZE(l) += 1;
 }
 
-static inline void slist_push_back(slist_t* l, slist_entry_t* entry) {
+static inline void slist_push_back(slist_t* l, chained_t* entry) {
     assert(l != NULL);
     assert(entry != NULL);
-    slist_entry_t* tail = LIST_TAIL(l);
-    slist_entry_t* last = LIST_HEAD(l);
-    slist_entry_t* tmp = LIST_BEGIN(l);
+    chained_t* tail = LIST_TAIL(l);
+    chained_t* last = LIST_HEAD(l);
+    chained_t* tmp = LIST_BEGIN(l);
     while (tmp != tail) {
         last = LIST_ENTRY_NEXT(last);
         tmp = LIST_ENTRY_NEXT(tmp);
@@ -422,32 +427,73 @@ static inline void slist_push_back(slist_t* l, slist_entry_t* entry) {
     LIST_SIZE(l) += 1;
 }
 
-static inline void slist_insert(slist_t* l, slist_entry_t* entry, size_t i) {
+static inline int slist_insert(slist_t* l, chained_t* entry, size_t i) {
     assert(l != NULL);
     assert(entry != NULL);
     if (i > LIST_SIZE(l)) {
-        return;  // Out of range
+        return -1;  // Out of range
     }
-    slist_entry_t* tail = LIST_TAIL(l);
-    slist_entry_t* tmp = LIST_HEAD(l);
+    chained_t* tail = LIST_TAIL(l);
+    chained_t* tmp = LIST_HEAD(l);
     while (tmp != tail && i--) {
         tmp = LIST_ENTRY_NEXT(tmp);
     }
-    slist_entry_t* next = LIST_ENTRY_NEXT(tmp);
+    chained_t* next = LIST_ENTRY_NEXT(tmp);
     SLIST_ENTRY_INIT(entry, next);
     SLIST_ENTRY_INIT(tmp, entry);
     LIST_SIZE(l) += 1;
 }
 
-static inline void dlist_push_front(dlist_t* l, dlist_entry_t* entry) {
+static inline void dlist_push_front(dlist_t* l, chained_t* entry_next,
+                                    chained_t* entry_prev) {
     assert(l != NULL);
-    assert(entry != NULL);
-    dlist_entry_t* head = LIST_HEAD(l);
-    dlist_entry_t* first = forward_se2de(LIST_BEGIN(l));
-//    DLIST_ENTRY_INIT(entry, first, head);
-//    DLIST_ENTRY_INIT(head, entry, NULL);
-//    DLIST_ENTRY_INIT(first, NULL, entry);
-//    LIST_SIZE(l) += 1;
+    assert(entry_next != NULL);
+    assert(entry_prev != NULL);
+    chained_t* head_next = LIST_HEAD(l);
+    chained_t* head_prev = LIST_BACKWARD_HEAD(l);
+    chained_t* first_next = LIST_BEGIN(l);
+    chained_t* first_prev = dlist_next_prev(first_next);
+    DLIST_ENTRY_INIT(entry_next, first_next, entry_prev, head_prev);
+    SLIST_ENTRY_INIT(head_next, entry_next);
+    SLIST_ENTRY_INIT(first_prev, entry_prev);
+    LIST_SIZE(l) += 1;
+}
+
+static inline void dlist_push_back(dlist_t* l, chained_t* entry_next,
+                                   chained_t* entry_prev) {
+    assert(l != NULL);
+    assert(entry_next != NULL);
+    assert(entry_prev != NULL);
+    chained_t* tail_next = LIST_TAIL(l);
+    chained_t* tail_prev = LIST_BACKWARD_TAIL(l);
+    chained_t* last_prev = chained_to(tail_prev);
+    chained_t* last_next = dlist_prev_next(last_prev);
+    DLIST_ENTRY_INIT(entry_next, tail_next, entry_prev, last_prev);
+    SLIST_ENTRY_INIT(tail_prev, entry_next);
+    SLIST_ENTRY_INIT(last_next, entry_prev);
+    LIST_SIZE(l) += 1;
+}
+
+static inline int dlist_insert(dlist_t* l, chained_t* entry_next,
+                               chained_t* entry_prev, size_t i) {
+    assert(l != NULL);
+    assert(entry_next != NULL);
+    assert(entry_prev != NULL);
+    if (i > LIST_SIZE(l)) {
+        return -1;  // Out of range
+    }
+    chained_t* tail = LIST_TAIL(l);
+    chained_t* tmp = LIST_HEAD(l);
+    while (tmp != tail && i--) {
+        tmp = LIST_ENTRY_NEXT(tmp);
+    }
+    chained_t* next = LIST_ENTRY_NEXT(tmp);
+    chained_t* tmp_prev = dlist_next_prev(tmp);
+    chained_t* next_prev = dlist_next_prev(next);
+    DLIST_ENTRY_INIT(entry_next, next, entry_prev, tmp_prev);
+    SLIST_ENTRY_INIT(tmp, entry_next);
+    SLIST_ENTRY_INIT(next_prev, entry_prev);
+    LIST_SIZE(l) += 1;
 }
 
 #ifdef __cplusplus
