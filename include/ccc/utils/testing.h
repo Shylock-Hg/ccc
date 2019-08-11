@@ -13,7 +13,9 @@ extern "C" {
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "./argc.h"
 #include "./tty.h"
 
 size_t __tested_count = 0;
@@ -26,12 +28,12 @@ const char* __testing_case = "Testing";
         TTY_COLOR_SUFFIX
 #define __TESTING_COLOR_END TTY_COLOR_RESET_NOW
 
-#define __ON_TESTING_FAILED(msg)                              \
-    do {                                                      \
-        fprintf(__TESTING_FILE,                               \
-                __TESTING_COLOR_FAILED                        \
-                "FAILED! in %s:%d, %s\n" __TESTING_COLOR_END, \
-                __FILE__, __LINE__, msg);                     \
+#define __ON_TESTING_FAILED(fmt, ...)                            \
+    do {                                                         \
+        fprintf(__TESTING_FILE,                                  \
+                __TESTING_COLOR_FAILED "FAILED! in %s:%d, " fmt  \
+                                       "\n" __TESTING_COLOR_END, \
+                __FILE__, __LINE__, ##__VA_ARGS__);              \
     } while (0);
 
 #define TESTING_REPORT()                                                   \
@@ -41,46 +43,39 @@ const char* __testing_case = "Testing";
                 __failed_count);                                           \
     } while (0);
 
-#define TESTING_EXPECT_M(prod, msg)   \
-    do {                              \
-        __tested_count++;             \
-        if (!(prod)) {                \
-            __failed_count++;         \
-            __ON_TESTING_FAILED(msg); \
-        }                             \
+/// \param prod
+/// \param fmt
+/// \param varidic parameter
+#define TESTING_EXPECT(prod, ...)                    \
+    do {                                             \
+        __tested_count++;                            \
+        if (!(prod)) {                               \
+            __failed_count++;                        \
+            if (0 == strlen(argsstr(__VA_ARGS__))) { \
+                __ON_TESTING_FAILED(#prod);          \
+            } else {                                 \
+                __ON_TESTING_FAILED(__VA_ARGS__);    \
+            }                                        \
+        }                                            \
     } while (0);
 
-#define TESTING_EXPECT(prod)            \
-    do {                                \
-        __tested_count++;               \
-        if (!(prod)) {                  \
-            __failed_count++;           \
-            __ON_TESTING_FAILED(#prod); \
-        }                               \
-    } while (0);
-
-#define TESTING_ASSERT_M(prod, msg)   \
-    do {                              \
-        __tested_count++;             \
-        if (!(prod)) {                \
-            __failed_count++;         \
-            __ON_TESTING_FAILED(msg); \
-            TESTING_REPORT();         \
-            fflush(__TESTING_FILE);   \
-            abort();                  \
-        }                             \
-    } while (0);
-
-#define TESTING_ASSERT(prod)            \
-    do {                                \
-        __tested_count++;               \
-        if (!(prod)) {                  \
-            __failed_count++;           \
-            __ON_TESTING_FAILED(#prod); \
-            TESTING_REPORT();           \
-            fflush(__TESTING_FILE);     \
-            abort();                    \
-        }                               \
+/// \param prod
+/// \param fmt
+/// \param varidic parameter
+#define TESTING_ASSERT(prod, ...)                    \
+    do {                                             \
+        __tested_count++;                            \
+        if (!(prod)) {                               \
+            __failed_count++;                        \
+            if (0 == strlen(argsstr(__VA_ARGS__))) { \
+                __ON_TESTING_FAILED(#prod);          \
+            } else {                                 \
+                __ON_TESTING_FAILED(__VA_ARGS__);    \
+            }                                        \
+            TESTING_REPORT();                        \
+            fflush(__TESTING_FILE);                  \
+            abort();                                 \
+        }                                            \
     } while (0);
 
 #define TESTING_FAILED() (__failed_count)
