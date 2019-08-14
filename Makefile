@@ -15,10 +15,12 @@ DIR_INCLUDES = include
 
 PPFLAGS = -MT $@ -MMD -MP -MF $(patsubst %.o, %.d, $@)
 
-CFLAGS_LOCAL = -Wall -Werror -std=c99 -I$(DIR_INCLUDES)
+CFLAGS_SHARED = -Wall -Werror -std=c99 $(addprefix -I, $(DIR_INCLUDES))
+
+CFLAGS_LOCAL = $(CFLAGS_SHARED) -O2
 CFLAGS_LOCAL += $(CFLAGS)
 
-CFLAGS_LOCAL_D = $(CFLAGS_LOCAL) -g -coverage
+CFLAGS_LOCAL_D = $(CFLAGS_SHARED) -g -Og -coverage
 CFLAGS_LOCAL_D += $(CFLAGS)
 
 ifeq ($(WITH_VALGRIND), yes)
