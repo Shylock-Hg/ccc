@@ -66,3 +66,10 @@ cc_test(
     deps = ["//:ccc"],
     copts = COPTS,
 )
+
+cc_test(
+    name = "scoped_invoker_test",
+    srcs = ["utils/scoped_invoker_test.cc"],
+    includes = ["include"],
+    deps = ["//:ccc", "@com_google_googletest//:gtest_main",],
+)

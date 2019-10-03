@@ -4,7 +4,7 @@
  *  \email tcath2s@gmail.com
  * */
 
-#include <ccc/utils/clog.h>
+#include <c/utils/clog.h>
 
 int main(int argc, char* argv[]) {
     LOGD("Hello World!\n");

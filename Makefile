@@ -16,12 +16,17 @@ DIR_INCLUDES = include
 PPFLAGS = -MT $@ -MMD -MP -MF $(patsubst %.o, %.d, $@)
 
 CFLAGS_SHARED = -Wall -Werror -std=c99 $(addprefix -I, $(DIR_INCLUDES))
+CCFLAGS_SHARED = -Wall -Werror -std=c++11 $(addprefix -I, $(DIR_INCLUDES))
 
 CFLAGS_LOCAL = $(CFLAGS_SHARED) -O2
 CFLAGS_LOCAL += $(CFLAGS)
+CCFLAGS_LOCAL = $(CCFLAGS_SHARED) -O2
+CCFLAGS_LOCAL += $(CCFLAGS)
 
 CFLAGS_LOCAL_D = $(CFLAGS_SHARED) -g -Og -coverage
 CFLAGS_LOCAL_D += $(CFLAGS)
+CCFLAGS_LOCAL_D = $(CCFLAGS_SHARED) -g -Og -coverage
+CCFLAGS_LOCAL_D += $(CCFLAGS)
 
 ifeq ($(WITH_VALGRIND), yes)
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
@@ -31,12 +36,22 @@ TEST_SOURCES = $(wildcard  tests/*/*.c)
 TEST_OBJECTS = $(patsubst %.c, %.o, $(TEST_SOURCES))
 TESTS = $(patsubst %.o, %, $(TEST_OBJECTS))
 
+TEST_CC_SOURCES = $(wildcard tests/*/*.cc)
+TEST_CC_OBJECTS = $(patsubst %.cc, %.o, $(TEST_CC_SOURCES))
+TESTS_CC = $(patsubst %.o, %, $(TEST_CC_OBJECTS))
+
 APP_SOURCES = $(TEST_SOURCES)
 APP_OBJECTS = $(patsubst %.c, %.o, $(APP_SOURCES))
 APPS = $(patsubst %.c, %, $(APP_SOURCES))
 
+APP_CC_SOURCES += $(TEST_CC_SOURCES)
+APP_CC_OBJECTS += $(TEST_CC_OBJECTS)
+APPS_CC += $(TESTS_CC)
+
 LIB_SOURCES = $(wildcard src/*/*.c)
 LIB_OBJECTS = $(patsubst %.c, %.o, $(LIB_SOURCES))
+LIB_CC_SOURCES = $(wildcard src/*/*.cc)
+LIB_CC_OBJECTS = $(patsubst %.cc, %.o, $(LIB_CC_SOURCES))
 LIB_VERSION = 0.0.1
 LIB_NAME = ccc
 LIB_SO = lib$(LIB_NAME).so.$(LIB_VERSION)
@@ -48,20 +63,24 @@ DEPFILES = $(patsubst %.o, %.d, $(addprefix $(DIR_BUILD_D)/, $(APP_OBJECTS)) $(a
 
 .PHONY : all clean install uninstall test
 
-all : $(addprefix $(DIR_BUILD_D)/, $(APPS)) $(DIR_BUILD_R)/$(LIB_SO) $(DIR_BUILD_R)/$(LIB_A)
+all : $(addprefix $(DIR_BUILD_D)/, $(APPS)) $(addprefix $(DIR_BUILD_D)/, $(APPS_CC)) $(DIR_BUILD_R)/$(LIB_SO) $(DIR_BUILD_R)/$(LIB_A)
 
 # release library
-$(DIR_BUILD_R)/$(LIB_SO) : $(addprefix $(DIR_BUILD_R)/, $(LIB_OBJECTS)) Makefile | $(DIR_BUILD_R)
+$(DIR_BUILD_R)/$(LIB_SO) : $(addprefix $(DIR_BUILD_R)/, $(LIB_OBJECTS)) $(addprefix $(DIR_BUILD_R)/, $(LIB_CC_OBJECTS)) Makefile | $(DIR_BUILD_R)
 	$(CC) $(CFLAGS_LOCAL) -shared -o $@ $(filter %.o, $^)
 	$(LN) -sf $(shell pwd)/$@ $(DIR_BUILD_R)/lib$(LIB_NAME).so
 
-$(DIR_BUILD_R)/$(LIB_A) : $(addprefix $(DIR_BUILD_R)/, $(LIB_OBJECTS)) Makefile | $(DIR_BUILD_R)
+$(DIR_BUILD_R)/$(LIB_A) : $(addprefix $(DIR_BUILD_R)/, $(LIB_OBJECTS)) $(addprefix $(DIR_BUILD_R)/, $(LIB_CC_OBJECTS)) Makefile | $(DIR_BUILD_R)
 	$(AR) $(ARFLAGS) $@ $(filter %.o, $^)
 	$(LN) -sf $(shell pwd)/$@ $(DIR_BUILD_R)/lib$(LIB_NAME).a
 
 $(addprefix $(DIR_BUILD_R)/, $(LIB_OBJECTS)) : $(DIR_BUILD_R)/%.o : %.c Makefile | $(DIR_BUILD_R)
 	$(MKDIR) -p $(@D)
 	$(CC) $(PPFLAGS) $(CFLAGS_LOCAL) -fPIC -c $< -o $@
+
+$(addprefix $(DIR_BUILD_R)/, $(LIB_CC_OBJECTS)) : $(DIR_BUILD_R)/%.o : %.cc Makefile | $(DIR_BUILD_R)
+	$(MKDIR) -p $(@D)
+	$(CXX) $(PPFLAGS) $(CCFLAGS_LOCAL) -fPIC -c $< -o $@
 
 $(DIR_BUILD_R)/%.d : ;
 .PRECIOUS : $(DIR_BUILD_R)/%.d
@@ -70,11 +89,14 @@ $(DIR_BUILD_R)/%.d : ;
 $(addprefix $(DIR_BUILD_D)/, $(APPS)) : % : %.o $(DIR_BUILD_D)/$(LIB_SO_D) $(DIR_BUILD_D)/$(LIB_A_D) Makefile | $(DIR_BUILD_D)
 	$(CC) $(CFLAGS_LOCAL_D) -o $@ $< -L$(shell pwd)/$(DIR_BUILD_D) -l$(LIB_NAME)d
 
-$(DIR_BUILD_D)/$(LIB_SO_D) : $(addprefix $(DIR_BUILD_D)/, $(LIB_OBJECTS)) Makefile | $(DIR_BUILD_D)
+$(addprefix $(DIR_BUILD_D)/, $(APPS_CC)) : % : %.o $(DIR_BUILD_D)/$(LIB_SO_D) $(DIR_BUILD_D)/$(LIB_A_D) Makefile | $(DIR_BUILD_D)
+	$(CXX) $(CCFLAGS_LOCAL_D) -o $@ $< -L$(shell pwd)/$(DIR_BUILD_D) -l$(LIB_NAME)d -lgtest -lgtest_main
+
+$(DIR_BUILD_D)/$(LIB_SO_D) : $(addprefix $(DIR_BUILD_D)/, $(LIB_OBJECTS)) $(addprefix $(DIR_BUILD_D)/, $(LIB_CC_OBJECTS)) Makefile | $(DIR_BUILD_D)
 	$(CC) $(CFLAGS_LOCAL_D) -shared -o $@ $(filter %.o, $^)
 	$(LN) -sf $(shell pwd)/$@ $(DIR_BUILD_D)/lib$(LIB_NAME)d.so
 
-$(DIR_BUILD_D)/$(LIB_A_D) : $(addprefix $(DIR_BUILD_D)/, $(LIB_OBJECTS)) Makefile | $(DIR_BUILD_D)
+$(DIR_BUILD_D)/$(LIB_A_D) : $(addprefix $(DIR_BUILD_D)/, $(LIB_OBJECTS)) $(addprefix $(DIR_BUILD_D)/, $(LIB_CC_OBJECTS)) Makefile | $(DIR_BUILD_D)
 	$(AR) $(ARFLAGS) $@ $(filter %.o, $^)
 	$(LN) -sf $(shell pwd)/$@ $(DIR_BUILD_D)/lib$(LIB_NAME)d.a
 
@@ -82,9 +104,17 @@ $(addprefix $(DIR_BUILD_D)/, $(APP_OBJECTS)) : $(DIR_BUILD_D)/%.o : %.c Makefile
 	$(MKDIR) -p $(@D)
 	$(CC) $(PPFLAGS) $(CFLAGS_LOCAL_D) -c $< -o $@
 
+$(addprefix $(DIR_BUILD_D)/, $(APP_CC_OBJECTS)) : $(DIR_BUILD_D)/%.o : %.cc Makefile | $(DIR_BUILD_D)
+	$(MKDIR) -p $(@D)
+	$(CXX) $(PPFLAGS) $(CCFLAGS_LOCAL_D) -c $< -o $@
+
 $(addprefix $(DIR_BUILD_D)/, $(LIB_OBJECTS)) : $(DIR_BUILD_D)/%.o : %.c Makefile | $(DIR_BUILD_D)
 	$(MKDIR) -p $(@D)
 	$(CC) $(PPFLAGS) $(CFLAGS_LOCAL_D) -fPIC -c $< -o $@
+
+$(addprefix $(DIR_BUILD_D)/, $(LIB_CC_OBJECTS)) : $(DIR_BUILD_D)/%.o : %.cc Makefile | $(DIR_BUILD_D)
+	$(MKDIR) -p $(@D)
+	$(CXX) $(PPFLAGS) $(CCFLAGS_LOCAL_D) -fPIC -c $< -o $@
 
 $(DIR_BUILD_D)/%.d : ;
 .PRECIOUS : $(DIR_BUILD_D)/%.d
@@ -125,13 +155,13 @@ uninstall :
 	$(RM) -rf "$(prefix)/include/$(LIB_NAME)"
 #	$(RM) -f  "$(prefix)/bin/$(APP)"
 
-test : $(addprefix $(DIR_BUILD_D)/, $(TESTS))
+test : $(addprefix $(DIR_BUILD_D)/, $(TESTS)) $(addprefix $(DIR_BUILD_D)/, $(TESTS_CC))
 	set -e; for test in $^; do $(VALGRIND) ./$${test}; echo -en "\n\n"; done
 
 clean :
 	$(RM) -rf $(DIR_BUILD)
 
 fmt :
-	$(FMT) -i --style=file $$(find . -type f \( -name '*.c' -o -name '*.h' \))
+	$(FMT) -i --style=file $$(find . -type f \( -name '*.c' -o -name '*.h' -o -name '*.cc' \))
 
 include $(DEPFILES)

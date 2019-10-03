@@ -4,8 +4,8 @@
  *  \email tcath2s@gmail.com
  * */
 
-#include <ccc/utils/panic.h>
-#include <ccc/utils/testing.h>
+#include <c/utils/panic.h>
+#include <c/utils/testing.h>
 
 int main(int argc, char* argv[]) {
     //    panic("Oh My God!\n");

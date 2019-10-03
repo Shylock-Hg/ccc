@@ -12,8 +12,10 @@ load(
 # https://docs.bazel.build/versions/master/be/c-cpp.html#cc_library
 cc_library(
     name = "ccc",
-    srcs = glob(["src/utils/*.c", "src/container/*.c"]),
-    hdrs = glob(["include/ccc/utils/*.h", "include/ccc/container/*.h"]) ,
+    srcs = glob(["src/utils/*.c", "src/container/*.c",
+        "src/utils/*.cc", "src/container/*.cc"]),
+    hdrs = glob(["include/c/utils/*.h", "include/c/container/*.h",
+        "include/cc/utils/*.h", "include/cc/utils/*.h"]) ,
     includes = ["include"],
     copts = COPTS,
 )

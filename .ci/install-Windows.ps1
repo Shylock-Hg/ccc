@@ -1,5 +1,5 @@
 #! powershell
 
 iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
-scoop install bazel
+scoop install bazel gtest
 bazel version

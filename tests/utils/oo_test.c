@@ -4,8 +4,8 @@
  *  \email tcath2s@gmail.com
  * */
 
-#include <ccc/utils/oo.h>
-#include <ccc/utils/testing.h>
+#include <c/utils/oo.h>
+#include <c/utils/testing.h>
 
 struct base {
     int c;

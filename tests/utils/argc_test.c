@@ -4,8 +4,8 @@
  *  \email tcath2s@gmail.com
  * */
 
-#include <ccc/utils/argc.h>
-#include <ccc/utils/testing.h>
+#include <c/utils/argc.h>
+#include <c/utils/testing.h>
 
 int main(int argc, char* argv[]) {
     //    TESTING_ASSERT(0 == count_args());

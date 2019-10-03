@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <ccc/utils/argc.h>
+#include <c/utils/argc.h>
 
 /// \brief count the arguments by string
 /// \param args arguments string

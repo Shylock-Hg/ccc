@@ -6,9 +6,9 @@
 
 #include <limits.h>
 
-#include <ccc/container/sdb.h>
-#include <ccc/utils/compiletime.h>
-#include <ccc/utils/panic.h>
+#include <c/container/sdb.h>
+#include <c/utils/compiletime.h>
+#include <c/utils/panic.h>
 
 #define SDB_TYPE_5 0U
 #define SDB_TYPE_8 1U

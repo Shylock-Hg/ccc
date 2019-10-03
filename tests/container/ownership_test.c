@@ -4,9 +4,9 @@
  *  \email tcath2s@gmail.com
  * */
 
-#include <ccc/container/ownership.h>
-#include <ccc/container/sdb.h>
-#include <ccc/utils/testing.h>
+#include <c/container/ownership.h>
+#include <c/container/sdb.h>
+#include <c/utils/testing.h>
 
 int main(int argc, char* argv[]) {
     TESTING_CASE("Ownership");
