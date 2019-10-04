@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ccc/container/sdb.h>
-#include <ccc/utils/testing.h>
+#include <c/container/sdb.h>
+#include <c/utils/testing.h>
 
 const char* hello = "Hello World!";
 
